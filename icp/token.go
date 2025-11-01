@@ -16,10 +16,10 @@ func (ts TokenStandard) String() string {
 
 type Token interface {
 	Canister
-	Metadata() Metadata
+	Metadata() TokenMetadata
 }
 
-type Metadata struct {
+type TokenMetadata struct {
 	Name   string
 	Symbol string
 	Fee    *big.Int

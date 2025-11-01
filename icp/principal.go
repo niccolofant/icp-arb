@@ -30,6 +30,10 @@ func (p Principal) String() string {
 	return p.raw.String()
 }
 
+func (p Principal) Equal(other Principal) bool {
+	return p.raw.Equal(other.Raw())
+}
+
 func (p Principal) Blob() []byte {
 	principalBytes := p.Raw().Raw
 	result := make([]byte, 32)

@@ -7,6 +7,8 @@ import (
 	"github.com/niccolofant/ic-arb/icp"
 )
 
+var _ ICRC1 = (*icrc1)(nil)
+
 type ICRC1 interface {
 	icp.Token
 	Transfer(amount *big.Int, to icp.Principal, subaccount *[]byte) error
@@ -15,13 +17,13 @@ type ICRC1 interface {
 type icrc1 struct {
 	api        API
 	canisterID icp.Principal
-	metadata   icp.Metadata
+	metadata   icp.TokenMetadata
 }
 
 func NewWithMetadata(
 	agent *icp.Agent,
 	canisterID icp.Principal,
-	metadata icp.Metadata,
+	metadata icp.TokenMetadata,
 ) (*icrc1, error) {
 	api, err := NewAPI(canisterID, agent)
 	if err != nil {
@@ -39,6 +41,10 @@ func (i *icrc1) CanisterID() icp.Principal {
 	return i.canisterID
 }
 
-func (i *icrc1) Metadata() icp.Metadata {
+func (i *icrc1) Equal(other icp.Canister) bool {
+	return i.CanisterID().Equal(other.CanisterID())
+}
+
+func (i *icrc1) Metadata() icp.TokenMetadata {
 	return i.metadata
 }
