@@ -1,5 +1,7 @@
 package icp
 
+import "math/big"
+
 type TokenStandard string
 
 const (
@@ -10,4 +12,15 @@ const (
 
 func (ts TokenStandard) String() string {
 	return string(ts)
+}
+
+type Token interface {
+	Canister
+	Metadata() Metadata
+}
+
+type Metadata struct {
+	Name   string
+	Symbol string
+	Fee    *big.Int
 }

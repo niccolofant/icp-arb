@@ -1,4 +1,4 @@
-package icrc1
+package icrc2
 
 import (
 	"fmt"
@@ -7,12 +7,12 @@ import (
 	"github.com/niccolofant/ic-arb/icp"
 )
 
-type ICRC1 interface {
+type ICRC2 interface {
 	icp.Token
-	Transfer(amount *big.Int, to icp.Principal, subaccount *[]byte) error
+	Approve(spender icp.Principal, amount *big.Int) error
 }
 
-type icrc1 struct {
+type icrc2 struct {
 	api        API
 	canisterID icp.Principal
 	metadata   icp.Metadata
@@ -22,23 +22,23 @@ func NewWithMetadata(
 	agent *icp.Agent,
 	canisterID icp.Principal,
 	metadata icp.Metadata,
-) (*icrc1, error) {
+) (*icrc2, error) {
 	api, err := NewAPI(canisterID, agent)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create api client for %s: %w", canisterID, err)
 	}
 
-	return &icrc1{
+	return &icrc2{
 		api:        api,
 		canisterID: canisterID,
 		metadata:   metadata,
 	}, nil
 }
 
-func (i *icrc1) CanisterID() icp.Principal {
+func (i *icrc2) CanisterID() icp.Principal {
 	return i.canisterID
 }
 
-func (i *icrc1) Metadata() icp.Metadata {
+func (i *icrc2) Metadata() icp.Metadata {
 	return i.metadata
 }

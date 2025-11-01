@@ -26,6 +26,10 @@ func (p Principal) Raw() principal.Principal {
 	return p.raw
 }
 
+func (p Principal) String() string {
+	return p.raw.String()
+}
+
 func (p Principal) Blob() []byte {
 	principalBytes := p.Raw().Raw
 	result := make([]byte, 32)
