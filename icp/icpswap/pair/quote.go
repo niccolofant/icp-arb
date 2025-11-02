@@ -1,4 +1,4 @@
-package icpswap_pair
+package pair
 
 import (
 	"fmt"

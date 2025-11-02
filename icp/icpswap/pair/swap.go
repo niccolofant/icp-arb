@@ -1,4 +1,4 @@
-package icpswap_pair
+package pair
 
 import (
 	"fmt"
@@ -32,7 +32,7 @@ func (p *pair) depositAndSwap(from, to icp.Token, amountIn, amountOutMin *big.In
 	toFees := to.Metadata().Fee
 	subaccount := p.api.Agent().Sender().Blob()
 
-	transferredAmount, err := fromIcrc1.Transfer(
+	transferResult, err := fromIcrc1.Transfer(
 		amountIn,
 		p.CanisterID(),
 		&subaccount,
@@ -41,7 +41,7 @@ func (p *pair) depositAndSwap(from, to icp.Token, amountIn, amountOutMin *big.In
 		return nil, fmt.Errorf("failed to transfer %s %s tokens to subaccount %s: %w", amountIn, fromIcrc1, subaccount, err)
 	}
 
-	amountToSwap := new(big.Int).Sub(transferredAmount, fromFees)
+	amountToSwap := new(big.Int).Sub(transferResult.Amount, fromFees)
 
 	swapResult, err := p.api.DepositAndSwap(DepositAndSwapArgs{
 		AmountIn:         amountToSwap.String(),

@@ -4,10 +4,7 @@ go 1.24.4
 
 toolchain go1.24.9
 
-require (
-	github.com/aviate-labs/agent-go v0.7.6
-	github.com/stretchr/testify v1.11.1
-)
+require github.com/aviate-labs/agent-go v0.7.6
 
 require (
 	github.com/0x51-dev/upeg v0.1.5 // indirect
@@ -16,15 +13,11 @@ require (
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
 	github.com/consensys/bavard v0.1.27 // indirect
 	github.com/consensys/gnark-crypto v0.15.0 // indirect
-	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	golang.org/x/sys v0.29.0 // indirect
 	google.golang.org/protobuf v1.36.3 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )

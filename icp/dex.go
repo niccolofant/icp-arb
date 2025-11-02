@@ -31,3 +31,7 @@ type DexNotAggregated interface {
 type DexSwap interface {
 	Swap(from, to Token, amountIn, amountOutMin *big.Int) (*big.Int, error)
 }
+
+type DexQuote interface {
+	Quote(from, to Token, amountIn *big.Int) (*big.Int, error)
+}

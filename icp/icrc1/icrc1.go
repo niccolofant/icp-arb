@@ -11,7 +11,7 @@ var _ ICRC1 = (*icrc1)(nil)
 
 type ICRC1 interface {
 	icp.Token
-	Transfer(amount *big.Int, to icp.Principal, subaccount *[]byte) (*big.Int, error)
+	Transfer(amount *big.Int, to icp.Principal, subaccount *[]byte) (TransferResponse, error)
 }
 
 type icrc1 struct {

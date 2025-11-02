@@ -12,7 +12,7 @@ func (i *icrc1) Transfer(
 	amount *big.Int,
 	to icp.Principal,
 	subaccount *[]byte,
-) (*big.Int, error) {
+) (TransferResponse, error) {
 	amountToTransfer := new(big.Int).Sub(amount, i.Metadata().Fee)
 
 	transferResult, err := i.api.Icrc1Transfer(TransferArgs{
@@ -23,12 +23,15 @@ func (i *icrc1) Transfer(
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to transfer %s tokens to %s: %w", amountToTransfer, to, err)
+		return TransferResponse{}, fmt.Errorf("failed to transfer %s tokens to %s: %w", amountToTransfer, to, err)
 	}
 
 	if transferResult.Err != nil {
-		return nil, fmt.Errorf("failed to transfer %s tokens to %s: %w", amountToTransfer, to, transferResult.Err.Decode())
+		return TransferResponse{}, fmt.Errorf("failed to transfer %s tokens to %s: %w", amountToTransfer, to, transferResult.Err.Decode())
 	}
 
-	return amountToTransfer, nil
+	return TransferResponse{
+		Amount:   amountToTransfer,
+		BlockIdx: transferResult.Ok.BigInt(),
+	}, nil
 }

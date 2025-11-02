@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/niccolofant/ic-arb/icp"
-	"github.com/niccolofant/ic-arb/icp/icpswap/pair"
 	"github.com/niccolofant/ic-arb/icp/icrc1"
 	"github.com/niccolofant/ic-arb/icp/icrc2"
+	"github.com/niccolofant/ic-arb/icp/kongswap/kong"
 )
 
-func TestIcpswap() {
+func TestKongswap() {
 	id, err := icp.LoadIntentity("")
 	if err != nil {
 		panic(err)
@@ -73,26 +73,21 @@ func TestIcpswap() {
 	// 	ckbtcToken,
 	// 	icpToken,
 	// )
-	icpExePair, err := pair.NewWithMetadata(
-		agent,
-		icp.MustDecodePrincipal("dlfvj-eqaaa-aaaag-qcs3a-cai"),
-		exeToken,
-		icpToken,
-	)
+	kong, err := kong.NewWithMetadata(agent)
 	if err != nil {
 		panic(err)
 	}
 
-	amountIn := big.NewInt(668552133)
+	amountIn := big.NewInt(81_021_993)
 
-	quoteResult, err := icpExePair.Quote(exeToken, icpToken, amountIn)
+	quoteResult, err := kong.Quote(exeToken, icpToken, amountIn)
 	if err != nil {
 		panic(err)
 	}
 
 	log.Println("quote: ", quoteResult)
 
-	result, err := icpExePair.Swap(exeToken, icpToken, amountIn, quoteResult)
+	result, err := kong.Swap(exeToken, icpToken, amountIn, quoteResult)
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-package icpswap_pair
+package pair
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ var _ Pair = (*pair)(nil)
 
 type Pair interface {
 	icp.Dex
+	icp.DexQuote
 	icp.DexSwap
 	icp.DexNotAggregated
 }
