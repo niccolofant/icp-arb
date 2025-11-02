@@ -3,7 +3,8 @@
 package icpswap_pair
 
 import (
-	"github.com/aviate-labs/agent-go"
+	"fmt"
+
 	"github.com/aviate-labs/agent-go/candid/idl"
 	"github.com/aviate-labs/agent-go/principal"
 	"github.com/niccolofant/ic-arb/icp"
@@ -695,6 +696,21 @@ type Error struct {
 	UnsupportedToken  *string   `ic:"UnsupportedToken,variant" json:"UnsupportedToken,omitempty"`
 }
 
+func (e Error) Decode() error {
+	switch {
+	case e.CommonError != nil:
+		return fmt.Errorf("common error occurred")
+	case e.InsufficientFunds != nil:
+		return fmt.Errorf("insufficient funds")
+	case e.InternalError != nil:
+		return fmt.Errorf("internal error: %s", *e.InternalError)
+	case e.UnsupportedToken != nil:
+		return fmt.Errorf("unsupported token: %s", *e.UnsupportedToken)
+	default:
+		return fmt.Errorf("unknown error")
+	}
+}
+
 type DepositStatus struct {
 	Completed         *idl.Null `ic:"Completed,variant" json:"Completed,omitempty"`
 	Created           *idl.Null `ic:"Created,variant" json:"Created,omitempty"`
@@ -843,27 +859,33 @@ type Account struct {
 }
 
 type API interface {
+	Agent() *icp.Agent
+	Quote(arg0 SwapArgs) (*Result, error)
 	DepositAndSwap(arg0 DepositAndSwapArgs) (*Result, error)
 	DepositFromAndSwap(arg0 DepositAndSwapArgs) (*Result, error)
 }
 
 // api is a client for the "icpswap_pair" canister.
 type api struct {
-	*agent.Agent
+	agent      *icp.Agent
 	CanisterId principal.Principal
 }
 
 // NewAPI creates a new agent for the "icrc2" canister.
 func NewAPI(canisterId icp.Principal, a *icp.Agent) (*api, error) {
 	return &api{
-		Agent:      a.Raw(),
+		agent:      a,
 		CanisterId: canisterId.Raw(),
 	}, nil
 }
 
+func (a *api) Agent() *icp.Agent {
+	return a.agent
+}
+
 // ActiveJobs calls the "activeJobs" method on the "icpswap_pair" canister.
 func (a api) ActiveJobs() error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"activeJobs",
 		[]any{},
@@ -877,7 +899,7 @@ func (a api) ActiveJobs() error {
 // AddLimitOrder calls the "addLimitOrder" method on the "icpswap_pair" canister.
 func (a api) AddLimitOrder(arg0 LimitOrderArgs) (*Result2, error) {
 	var r0 Result2
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"addLimitOrder",
 		[]any{arg0},
@@ -891,7 +913,7 @@ func (a api) AddLimitOrder(arg0 LimitOrderArgs) (*Result2, error) {
 // AllTokenBalance calls the "allTokenBalance" method on the "icpswap_pair" canister.
 func (a api) AllTokenBalance(arg0 idl.Nat, arg1 idl.Nat) (*Result32, error) {
 	var r0 Result32
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"allTokenBalance",
 		[]any{arg0, arg1},
@@ -905,7 +927,7 @@ func (a api) AllTokenBalance(arg0 idl.Nat, arg1 idl.Nat) (*Result32, error) {
 // ApprovePosition calls the "approvePosition" method on the "icpswap_pair" canister.
 func (a api) ApprovePosition(arg0 principal.Principal, arg1 idl.Nat) (*Result2, error) {
 	var r0 Result2
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"approvePosition",
 		[]any{arg0, arg1},
@@ -919,7 +941,7 @@ func (a api) ApprovePosition(arg0 principal.Principal, arg1 idl.Nat) (*Result2, 
 // BatchRefreshIncome calls the "batchRefreshIncome" method on the "icpswap_pair" canister.
 func (a api) BatchRefreshIncome(arg0 []idl.Nat) (*Result31, error) {
 	var r0 Result31
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"batchRefreshIncome",
 		[]any{arg0},
@@ -933,7 +955,7 @@ func (a api) BatchRefreshIncome(arg0 []idl.Nat) (*Result31, error) {
 // CheckOwnerOfUserPosition calls the "checkOwnerOfUserPosition" method on the "icpswap_pair" canister.
 func (a api) CheckOwnerOfUserPosition(arg0 principal.Principal, arg1 idl.Nat) (*Result2, error) {
 	var r0 Result2
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"checkOwnerOfUserPosition",
 		[]any{arg0, arg1},
@@ -947,7 +969,7 @@ func (a api) CheckOwnerOfUserPosition(arg0 principal.Principal, arg1 idl.Nat) (*
 // Claim calls the "claim" method on the "icpswap_pair" canister.
 func (a api) Claim(arg0 ClaimArgs) (*Result30, error) {
 	var r0 Result30
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"claim",
 		[]any{arg0},
@@ -961,7 +983,7 @@ func (a api) Claim(arg0 ClaimArgs) (*Result30, error) {
 // DecreaseLiquidity calls the "decreaseLiquidity" method on the "icpswap_pair" canister.
 func (a api) DecreaseLiquidity(arg0 DecreaseLiquidityArgs) (*Result30, error) {
 	var r0 Result30
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"decreaseLiquidity",
 		[]any{arg0},
@@ -975,7 +997,7 @@ func (a api) DecreaseLiquidity(arg0 DecreaseLiquidityArgs) (*Result30, error) {
 // DeleteFailedTransaction calls the "deleteFailedTransaction" method on the "icpswap_pair" canister.
 func (a api) DeleteFailedTransaction(arg0 idl.Nat, arg1 bool) (*Result2, error) {
 	var r0 Result2
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"deleteFailedTransaction",
 		[]any{arg0, arg1},
@@ -989,7 +1011,7 @@ func (a api) DeleteFailedTransaction(arg0 idl.Nat, arg1 bool) (*Result2, error) 
 // Deposit calls the "deposit" method on the "icpswap_pair" canister.
 func (a api) Deposit(arg0 DepositArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"deposit",
 		[]any{arg0},
@@ -1003,7 +1025,7 @@ func (a api) Deposit(arg0 DepositArgs) (*Result, error) {
 // DepositAllAndMint calls the "depositAllAndMint" method on the "icpswap_pair" canister.
 func (a api) DepositAllAndMint(arg0 DepositAndMintArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"depositAllAndMint",
 		[]any{arg0},
@@ -1017,7 +1039,7 @@ func (a api) DepositAllAndMint(arg0 DepositAndMintArgs) (*Result, error) {
 // DepositAndSwap calls the "depositAndSwap" method on the "icpswap_pair" canister.
 func (a api) DepositAndSwap(arg0 DepositAndSwapArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"depositAndSwap",
 		[]any{arg0},
@@ -1031,7 +1053,7 @@ func (a api) DepositAndSwap(arg0 DepositAndSwapArgs) (*Result, error) {
 // DepositFrom calls the "depositFrom" method on the "icpswap_pair" canister.
 func (a api) DepositFrom(arg0 DepositArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"depositFrom",
 		[]any{arg0},
@@ -1045,7 +1067,7 @@ func (a api) DepositFrom(arg0 DepositArgs) (*Result, error) {
 // DepositFromAndSwap calls the "depositFromAndSwap" method on the "icpswap_pair" canister.
 func (a api) DepositFromAndSwap(arg0 DepositAndSwapArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"depositFromAndSwap",
 		[]any{arg0},
@@ -1059,7 +1081,7 @@ func (a api) DepositFromAndSwap(arg0 DepositAndSwapArgs) (*Result, error) {
 // GetAdmins calls the "getAdmins" method on the "icpswap_pair" canister.
 func (a api) GetAdmins() (*[]principal.Principal, error) {
 	var r0 []principal.Principal
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getAdmins",
 		[]any{},
@@ -1079,7 +1101,7 @@ func (a api) GetAvailabilityState() (*struct {
 		Available bool                  `ic:"available" json:"available"`
 		WhiteList []principal.Principal `ic:"whiteList" json:"whiteList"`
 	}
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getAvailabilityState",
 		[]any{},
@@ -1099,7 +1121,7 @@ func (a api) GetCachedTokenFee() (*struct {
 		Token0Fee idl.Nat `ic:"token0Fee" json:"token0Fee"`
 		Token1Fee idl.Nat `ic:"token1Fee" json:"token1Fee"`
 	}
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getCachedTokenFee",
 		[]any{},
@@ -1113,7 +1135,7 @@ func (a api) GetCachedTokenFee() (*struct {
 // GetClaimLog calls the "getClaimLog" method on the "icpswap_pair" canister.
 func (a api) GetClaimLog() (*[]string, error) {
 	var r0 []string
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getClaimLog",
 		[]any{},
@@ -1127,7 +1149,7 @@ func (a api) GetClaimLog() (*[]string, error) {
 // GetCycleInfo calls the "getCycleInfo" method on the "icpswap_pair" canister.
 func (a api) GetCycleInfo() (*Result29, error) {
 	var r0 Result29
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"getCycleInfo",
 		[]any{},
@@ -1141,7 +1163,7 @@ func (a api) GetCycleInfo() (*Result29, error) {
 // GetFailedTransactions calls the "getFailedTransactions" method on the "icpswap_pair" canister.
 func (a api) GetFailedTransactions() (*Result16, error) {
 	var r0 Result16
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getFailedTransactions",
 		[]any{},
@@ -1155,7 +1177,7 @@ func (a api) GetFailedTransactions() (*Result16, error) {
 // GetFeeGrowthGlobal calls the "getFeeGrowthGlobal" method on the "icpswap_pair" canister.
 func (a api) GetFeeGrowthGlobal() (*Result28, error) {
 	var r0 Result28
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getFeeGrowthGlobal",
 		[]any{},
@@ -1169,7 +1191,7 @@ func (a api) GetFeeGrowthGlobal() (*Result28, error) {
 // GetInitArgs calls the "getInitArgs" method on the "icpswap_pair" canister.
 func (a api) GetInitArgs() (*Result27, error) {
 	var r0 Result27
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getInitArgs",
 		[]any{},
@@ -1189,7 +1211,7 @@ func (a api) GetJobs() (*struct {
 		Jobs  []JobInfo `ic:"jobs" json:"jobs"`
 		Level Level     `ic:"level" json:"level"`
 	}
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getJobs",
 		[]any{},
@@ -1203,7 +1225,7 @@ func (a api) GetJobs() (*struct {
 // GetLimitOrderAvailabilityState calls the "getLimitOrderAvailabilityState" method on the "icpswap_pair" canister.
 func (a api) GetLimitOrderAvailabilityState() (*Result2, error) {
 	var r0 Result2
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getLimitOrderAvailabilityState",
 		[]any{},
@@ -1217,7 +1239,7 @@ func (a api) GetLimitOrderAvailabilityState() (*Result2, error) {
 // GetLimitOrderStack calls the "getLimitOrderStack" method on the "icpswap_pair" canister.
 func (a api) GetLimitOrderStack() (*Result26, error) {
 	var r0 Result26
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getLimitOrderStack",
 		[]any{},
@@ -1231,7 +1253,7 @@ func (a api) GetLimitOrderStack() (*Result26, error) {
 // GetLimitOrders calls the "getLimitOrders" method on the "icpswap_pair" canister.
 func (a api) GetLimitOrders() (*Result25, error) {
 	var r0 Result25
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getLimitOrders",
 		[]any{},
@@ -1245,7 +1267,7 @@ func (a api) GetLimitOrders() (*Result25, error) {
 // GetMistransferBalance calls the "getMistransferBalance" method on the "icpswap_pair" canister.
 func (a api) GetMistransferBalance(arg0 Token) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"getMistransferBalance",
 		[]any{arg0},
@@ -1259,7 +1281,7 @@ func (a api) GetMistransferBalance(arg0 Token) (*Result, error) {
 // GetPosition calls the "getPosition" method on the "icpswap_pair" canister.
 func (a api) GetPosition(arg0 GetPositionArgs) (*Result24, error) {
 	var r0 Result24
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getPosition",
 		[]any{arg0},
@@ -1273,7 +1295,7 @@ func (a api) GetPosition(arg0 GetPositionArgs) (*Result24, error) {
 // GetPositions calls the "getPositions" method on the "icpswap_pair" canister.
 func (a api) GetPositions(arg0 idl.Nat, arg1 idl.Nat) (*Result23, error) {
 	var r0 Result23
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getPositions",
 		[]any{arg0, arg1},
@@ -1287,7 +1309,7 @@ func (a api) GetPositions(arg0 idl.Nat, arg1 idl.Nat) (*Result23, error) {
 // GetSortedUserLimitOrders calls the "getSortedUserLimitOrders" method on the "icpswap_pair" canister.
 func (a api) GetSortedUserLimitOrders(arg0 principal.Principal) (*Result22, error) {
 	var r0 Result22
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getSortedUserLimitOrders",
 		[]any{arg0},
@@ -1301,7 +1323,7 @@ func (a api) GetSortedUserLimitOrders(arg0 principal.Principal) (*Result22, erro
 // GetSwapRecordState calls the "getSwapRecordState" method on the "icpswap_pair" canister.
 func (a api) GetSwapRecordState() (*Result21, error) {
 	var r0 Result21
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getSwapRecordState",
 		[]any{},
@@ -1315,7 +1337,7 @@ func (a api) GetSwapRecordState() (*Result21, error) {
 // GetTickBitmaps calls the "getTickBitmaps" method on the "icpswap_pair" canister.
 func (a api) GetTickBitmaps() (*Result20, error) {
 	var r0 Result20
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getTickBitmaps",
 		[]any{},
@@ -1329,7 +1351,7 @@ func (a api) GetTickBitmaps() (*Result20, error) {
 // GetTickInfos calls the "getTickInfos" method on the "icpswap_pair" canister.
 func (a api) GetTickInfos(arg0 idl.Nat, arg1 idl.Nat) (*Result19, error) {
 	var r0 Result19
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getTickInfos",
 		[]any{arg0, arg1},
@@ -1343,7 +1365,7 @@ func (a api) GetTickInfos(arg0 idl.Nat, arg1 idl.Nat) (*Result19, error) {
 // GetTicks calls the "getTicks" method on the "icpswap_pair" canister.
 func (a api) GetTicks(arg0 idl.Nat, arg1 idl.Nat) (*Result18, error) {
 	var r0 Result18
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getTicks",
 		[]any{arg0, arg1},
@@ -1357,7 +1379,7 @@ func (a api) GetTicks(arg0 idl.Nat, arg1 idl.Nat) (*Result18, error) {
 // GetTokenAmountState calls the "getTokenAmountState" method on the "icpswap_pair" canister.
 func (a api) GetTokenAmountState() (*Result17, error) {
 	var r0 Result17
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getTokenAmountState",
 		[]any{},
@@ -1377,7 +1399,7 @@ func (a api) GetTokenBalance() (*struct {
 		Token0 idl.Nat `ic:"token0" json:"token0"`
 		Token1 idl.Nat `ic:"token1" json:"token1"`
 	}
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"getTokenBalance",
 		[]any{},
@@ -1391,7 +1413,7 @@ func (a api) GetTokenBalance() (*struct {
 // GetTransactions calls the "getTransactions" method on the "icpswap_pair" canister.
 func (a api) GetTransactions() (*Result16, error) {
 	var r0 Result16
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getTransactions",
 		[]any{},
@@ -1405,7 +1427,7 @@ func (a api) GetTransactions() (*Result16, error) {
 // GetTransactionsByOwner calls the "getTransactionsByOwner" method on the "icpswap_pair" canister.
 func (a api) GetTransactionsByOwner(arg0 principal.Principal) (*Result16, error) {
 	var r0 Result16
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getTransactionsByOwner",
 		[]any{arg0},
@@ -1419,7 +1441,7 @@ func (a api) GetTransactionsByOwner(arg0 principal.Principal) (*Result16, error)
 // GetUserByPositionId calls the "getUserByPositionId" method on the "icpswap_pair" canister.
 func (a api) GetUserByPositionId(arg0 idl.Nat) (*Result1, error) {
 	var r0 Result1
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserByPositionId",
 		[]any{arg0},
@@ -1433,7 +1455,7 @@ func (a api) GetUserByPositionId(arg0 idl.Nat) (*Result1, error) {
 // GetUserLimitOrders calls the "getUserLimitOrders" method on the "icpswap_pair" canister.
 func (a api) GetUserLimitOrders(arg0 principal.Principal) (*Result15, error) {
 	var r0 Result15
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserLimitOrders",
 		[]any{arg0},
@@ -1447,7 +1469,7 @@ func (a api) GetUserLimitOrders(arg0 principal.Principal) (*Result15, error) {
 // GetUserPosition calls the "getUserPosition" method on the "icpswap_pair" canister.
 func (a api) GetUserPosition(arg0 idl.Nat) (*Result14, error) {
 	var r0 Result14
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserPosition",
 		[]any{arg0},
@@ -1461,7 +1483,7 @@ func (a api) GetUserPosition(arg0 idl.Nat) (*Result14, error) {
 // GetUserPositionIds calls the "getUserPositionIds" method on the "icpswap_pair" canister.
 func (a api) GetUserPositionIds() (*Result13, error) {
 	var r0 Result13
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserPositionIds",
 		[]any{},
@@ -1475,7 +1497,7 @@ func (a api) GetUserPositionIds() (*Result13, error) {
 // GetUserPositionIdsByPrincipal calls the "getUserPositionIdsByPrincipal" method on the "icpswap_pair" canister.
 func (a api) GetUserPositionIdsByPrincipal(arg0 principal.Principal) (*Result12, error) {
 	var r0 Result12
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserPositionIdsByPrincipal",
 		[]any{arg0},
@@ -1489,7 +1511,7 @@ func (a api) GetUserPositionIdsByPrincipal(arg0 principal.Principal) (*Result12,
 // GetUserPositionWithTokenAmount calls the "getUserPositionWithTokenAmount" method on the "icpswap_pair" canister.
 func (a api) GetUserPositionWithTokenAmount(arg0 idl.Nat, arg1 idl.Nat) (*Result11, error) {
 	var r0 Result11
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserPositionWithTokenAmount",
 		[]any{arg0, arg1},
@@ -1503,7 +1525,7 @@ func (a api) GetUserPositionWithTokenAmount(arg0 idl.Nat, arg1 idl.Nat) (*Result
 // GetUserPositions calls the "getUserPositions" method on the "icpswap_pair" canister.
 func (a api) GetUserPositions(arg0 idl.Nat, arg1 idl.Nat) (*Result10, error) {
 	var r0 Result10
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserPositions",
 		[]any{arg0, arg1},
@@ -1517,7 +1539,7 @@ func (a api) GetUserPositions(arg0 idl.Nat, arg1 idl.Nat) (*Result10, error) {
 // GetUserPositionsByPrincipal calls the "getUserPositionsByPrincipal" method on the "icpswap_pair" canister.
 func (a api) GetUserPositionsByPrincipal(arg0 principal.Principal) (*Result9, error) {
 	var r0 Result9
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserPositionsByPrincipal",
 		[]any{arg0},
@@ -1531,7 +1553,7 @@ func (a api) GetUserPositionsByPrincipal(arg0 principal.Principal) (*Result9, er
 // GetUserUnusedBalance calls the "getUserUnusedBalance" method on the "icpswap_pair" canister.
 func (a api) GetUserUnusedBalance(arg0 principal.Principal) (*Result8, error) {
 	var r0 Result8
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getUserUnusedBalance",
 		[]any{arg0},
@@ -1545,7 +1567,7 @@ func (a api) GetUserUnusedBalance(arg0 principal.Principal) (*Result8, error) {
 // GetVersion calls the "getVersion" method on the "icpswap_pair" canister.
 func (a api) GetVersion() (*string, error) {
 	var r0 string
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"getVersion",
 		[]any{},
@@ -1565,7 +1587,7 @@ func (a api) Icrc10SupportedStandards() (*[]struct {
 		Name string `ic:"name" json:"name"`
 		Url  string `ic:"url" json:"url"`
 	}
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"icrc10_supported_standards",
 		[]any{},
@@ -1579,7 +1601,7 @@ func (a api) Icrc10SupportedStandards() (*[]struct {
 // Icrc21CanisterCallConsentMessage calls the "icrc21_canister_call_consent_message" method on the "icpswap_pair" canister.
 func (a api) Icrc21CanisterCallConsentMessage(arg0 Icrc21ConsentMessageRequest) (*Icrc21ConsentMessageResponse, error) {
 	var r0 Icrc21ConsentMessageResponse
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"icrc21_canister_call_consent_message",
 		[]any{arg0},
@@ -1593,7 +1615,7 @@ func (a api) Icrc21CanisterCallConsentMessage(arg0 Icrc21ConsentMessageRequest) 
 // Icrc28TrustedOrigins calls the "icrc28_trusted_origins" method on the "icpswap_pair" canister.
 func (a api) Icrc28TrustedOrigins() (*Icrc28TrustedOriginsResponse, error) {
 	var r0 Icrc28TrustedOriginsResponse
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"icrc28_trusted_origins",
 		[]any{},
@@ -1607,7 +1629,7 @@ func (a api) Icrc28TrustedOrigins() (*Icrc28TrustedOriginsResponse, error) {
 // IncreaseLiquidity calls the "increaseLiquidity" method on the "icpswap_pair" canister.
 func (a api) IncreaseLiquidity(arg0 IncreaseLiquidityArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"increaseLiquidity",
 		[]any{arg0},
@@ -1620,7 +1642,7 @@ func (a api) IncreaseLiquidity(arg0 IncreaseLiquidityArgs) (*Result, error) {
 
 // Init calls the "init" method on the "icpswap_pair" canister.
 func (a api) Init(arg0 idl.Nat, arg1 idl.Int, arg2 idl.Nat) error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"init",
 		[]any{arg0, arg1, arg2},
@@ -1634,7 +1656,7 @@ func (a api) Init(arg0 idl.Nat, arg1 idl.Int, arg2 idl.Nat) error {
 // Metadata calls the "metadata" method on the "icpswap_pair" canister.
 func (a api) Metadata() (*Result7, error) {
 	var r0 Result7
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"metadata",
 		[]any{},
@@ -1648,7 +1670,7 @@ func (a api) Metadata() (*Result7, error) {
 // Mint calls the "mint" method on the "icpswap_pair" canister.
 func (a api) Mint(arg0 MintArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"mint",
 		[]any{arg0},
@@ -1662,7 +1684,7 @@ func (a api) Mint(arg0 MintArgs) (*Result, error) {
 // Quote calls the "quote" method on the "icpswap_pair" canister.
 func (a api) Quote(arg0 SwapArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"quote",
 		[]any{arg0},
@@ -1676,7 +1698,7 @@ func (a api) Quote(arg0 SwapArgs) (*Result, error) {
 // QuoteForAll calls the "quoteForAll" method on the "icpswap_pair" canister.
 func (a api) QuoteForAll(arg0 SwapArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"quoteForAll",
 		[]any{arg0},
@@ -1690,7 +1712,7 @@ func (a api) QuoteForAll(arg0 SwapArgs) (*Result, error) {
 // RefreshIncome calls the "refreshIncome" method on the "icpswap_pair" canister.
 func (a api) RefreshIncome(arg0 idl.Nat) (*Result6, error) {
 	var r0 Result6
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"refreshIncome",
 		[]any{arg0},
@@ -1704,7 +1726,7 @@ func (a api) RefreshIncome(arg0 idl.Nat) (*Result6, error) {
 // RemoveLimitOrder calls the "removeLimitOrder" method on the "icpswap_pair" canister.
 func (a api) RemoveLimitOrder(arg0 idl.Nat) (*Result2, error) {
 	var r0 Result2
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"removeLimitOrder",
 		[]any{arg0},
@@ -1717,7 +1739,7 @@ func (a api) RemoveLimitOrder(arg0 idl.Nat) (*Result2, error) {
 
 // RestartJobs calls the "restartJobs" method on the "icpswap_pair" canister.
 func (a api) RestartJobs(arg0 []string) error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"restartJobs",
 		[]any{arg0},
@@ -1730,7 +1752,7 @@ func (a api) RestartJobs(arg0 []string) error {
 
 // SetAdmins calls the "setAdmins" method on the "icpswap_pair" canister.
 func (a api) SetAdmins(arg0 []principal.Principal) error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"setAdmins",
 		[]any{arg0},
@@ -1743,7 +1765,7 @@ func (a api) SetAdmins(arg0 []principal.Principal) error {
 
 // SetAvailable calls the "setAvailable" method on the "icpswap_pair" canister.
 func (a api) SetAvailable(arg0 bool) error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"setAvailable",
 		[]any{arg0},
@@ -1757,7 +1779,7 @@ func (a api) SetAvailable(arg0 bool) error {
 // SetIcrc28TrustedOrigins calls the "setIcrc28TrustedOrigins" method on the "icpswap_pair" canister.
 func (a api) SetIcrc28TrustedOrigins(arg0 []string) (*Result5, error) {
 	var r0 Result5
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"setIcrc28TrustedOrigins",
 		[]any{arg0},
@@ -1770,7 +1792,7 @@ func (a api) SetIcrc28TrustedOrigins(arg0 []string) (*Result5, error) {
 
 // SetLimitOrderAvailable calls the "setLimitOrderAvailable" method on the "icpswap_pair" canister.
 func (a api) SetLimitOrderAvailable(arg0 bool) error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"setLimitOrderAvailable",
 		[]any{arg0},
@@ -1784,7 +1806,7 @@ func (a api) SetLimitOrderAvailable(arg0 bool) error {
 // SetTokenAmountState calls the "setTokenAmountState" method on the "icpswap_pair" canister.
 func (a api) SetTokenAmountState(arg0 idl.Nat, arg1 idl.Nat) (*Result4, error) {
 	var r0 Result4
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"setTokenAmountState",
 		[]any{arg0, arg1},
@@ -1797,7 +1819,7 @@ func (a api) SetTokenAmountState(arg0 idl.Nat, arg1 idl.Nat) (*Result4, error) {
 
 // SetWhiteList calls the "setWhiteList" method on the "icpswap_pair" canister.
 func (a api) SetWhiteList(arg0 []principal.Principal) error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"setWhiteList",
 		[]any{arg0},
@@ -1810,7 +1832,7 @@ func (a api) SetWhiteList(arg0 []principal.Principal) error {
 
 // StopJobs calls the "stopJobs" method on the "icpswap_pair" canister.
 func (a api) StopJobs(arg0 []string) error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"stopJobs",
 		[]any{arg0},
@@ -1824,7 +1846,7 @@ func (a api) StopJobs(arg0 []string) error {
 // SumTick calls the "sumTick" method on the "icpswap_pair" canister.
 func (a api) SumTick() (*Result3, error) {
 	var r0 Result3
-	if err := a.Agent.Query(
+	if err := a.agent.Raw().Query(
 		a.CanisterId,
 		"sumTick",
 		[]any{},
@@ -1838,7 +1860,7 @@ func (a api) SumTick() (*Result3, error) {
 // Swap calls the "swap" method on the "icpswap_pair" canister.
 func (a api) Swap(arg0 SwapArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"swap",
 		[]any{arg0},
@@ -1852,7 +1874,7 @@ func (a api) Swap(arg0 SwapArgs) (*Result, error) {
 // TransferPosition calls the "transferPosition" method on the "icpswap_pair" canister.
 func (a api) TransferPosition(arg0 principal.Principal, arg1 principal.Principal, arg2 idl.Nat) (*Result2, error) {
 	var r0 Result2
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"transferPosition",
 		[]any{arg0, arg1, arg2},
@@ -1865,7 +1887,7 @@ func (a api) TransferPosition(arg0 principal.Principal, arg1 principal.Principal
 
 // UpdateTokenFee calls the "updateTokenFee" method on the "icpswap_pair" canister.
 func (a api) UpdateTokenFee() error {
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"updateTokenFee",
 		[]any{},
@@ -1879,7 +1901,7 @@ func (a api) UpdateTokenFee() error {
 // UpgradeTokenStandard calls the "upgradeTokenStandard" method on the "icpswap_pair" canister.
 func (a api) UpgradeTokenStandard(arg0 principal.Principal) (*Result1, error) {
 	var r0 Result1
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"upgradeTokenStandard",
 		[]any{arg0},
@@ -1893,7 +1915,7 @@ func (a api) UpgradeTokenStandard(arg0 principal.Principal) (*Result1, error) {
 // Withdraw calls the "withdraw" method on the "icpswap_pair" canister.
 func (a api) Withdraw(arg0 WithdrawArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"withdraw",
 		[]any{arg0},
@@ -1907,7 +1929,7 @@ func (a api) Withdraw(arg0 WithdrawArgs) (*Result, error) {
 // WithdrawMistransferBalance calls the "withdrawMistransferBalance" method on the "icpswap_pair" canister.
 func (a api) WithdrawMistransferBalance(arg0 Token) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"withdrawMistransferBalance",
 		[]any{arg0},
@@ -1921,7 +1943,7 @@ func (a api) WithdrawMistransferBalance(arg0 Token) (*Result, error) {
 // WithdrawToSubaccount calls the "withdrawToSubaccount" method on the "icpswap_pair" canister.
 func (a api) WithdrawToSubaccount(arg0 WithdrawToSubaccountArgs) (*Result, error) {
 	var r0 Result
-	if err := a.Agent.Call(
+	if err := a.agent.Raw().Call(
 		a.CanisterId,
 		"withdrawToSubaccount",
 		[]any{arg0},

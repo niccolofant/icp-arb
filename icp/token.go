@@ -20,7 +20,9 @@ type Token interface {
 }
 
 type TokenMetadata struct {
-	Name   string
-	Symbol string
-	Fee    *big.Int
+	Name     string
+	Symbol   string
+	Fee      *big.Int
+	Standard TokenStandard
+	Decimals int
 }

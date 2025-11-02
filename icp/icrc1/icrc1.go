@@ -11,7 +11,7 @@ var _ ICRC1 = (*icrc1)(nil)
 
 type ICRC1 interface {
 	icp.Token
-	Transfer(amount *big.Int, to icp.Principal, subaccount *[]byte) error
+	Transfer(amount *big.Int, to icp.Principal, subaccount *[]byte) (*big.Int, error)
 }
 
 type icrc1 struct {
@@ -47,4 +47,8 @@ func (i *icrc1) Equal(other icp.Canister) bool {
 
 func (i *icrc1) Metadata() icp.TokenMetadata {
 	return i.metadata
+}
+
+func (i *icrc1) String() string {
+	return i.metadata.Symbol
 }

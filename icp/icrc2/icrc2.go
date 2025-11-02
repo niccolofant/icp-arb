@@ -48,3 +48,7 @@ func (i *icrc2) Equal(other icp.Canister) bool {
 func (i *icrc2) Metadata() icp.TokenMetadata {
 	return i.metadata
 }
+
+func (i *icrc2) String() string {
+	return i.metadata.Symbol
+}
