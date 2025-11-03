@@ -1,0 +1,5 @@
+package playgrounds
+
+func TestSonic() {
+
+}

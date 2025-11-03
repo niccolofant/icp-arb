@@ -5,10 +5,10 @@ import (
 	"math/big"
 	"net/http"
 
-	"github.com/niccolofant/ic-arb/icp"
-	"github.com/niccolofant/ic-arb/icp/icpswap/pair"
-	"github.com/niccolofant/ic-arb/icp/icrc1"
-	"github.com/niccolofant/ic-arb/icp/icrc2"
+	"github.com/niccolofant/ic-arb/core/icp"
+	"github.com/niccolofant/ic-arb/core/icp/icpswap/pair"
+	"github.com/niccolofant/ic-arb/core/icp/icrc1"
+	"github.com/niccolofant/ic-arb/core/icp/icrc2"
 )
 
 func TestIcpswap() {
@@ -83,16 +83,25 @@ func TestIcpswap() {
 		panic(err)
 	}
 
-	amountIn := big.NewInt(668552133)
+	amountIn := big.NewInt(6_600_000_000)
 
-	quoteResult, err := icpExePair.Quote(exeToken, icpToken, amountIn)
+	quoteResult, err := icpExePair.OneStepQuote(icp.DexQuoteParams{
+		FromToken: exeToken,
+		ToToken:   icpToken,
+		AmountIn:  amountIn,
+	}, nil)
 	if err != nil {
 		panic(err)
 	}
 
 	log.Println("quote: ", quoteResult)
 
-	result, err := icpExePair.Swap(exeToken, icpToken, amountIn, quoteResult)
+	result, err := icpExePair.OneStepSwap(icp.DexSwapParams{
+		FromToken:    exeToken,
+		ToToken:      icpToken,
+		AmountIn:     amountIn,
+		AmountOutMin: quoteResult,
+	}, nil)
 	if err != nil {
 		panic(err)
 	}

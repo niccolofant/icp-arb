@@ -5,10 +5,10 @@ import (
 	"math/big"
 	"net/http"
 
-	"github.com/niccolofant/ic-arb/icp"
-	"github.com/niccolofant/ic-arb/icp/icrc1"
-	"github.com/niccolofant/ic-arb/icp/icrc2"
-	"github.com/niccolofant/ic-arb/icp/kongswap/kong"
+	"github.com/niccolofant/ic-arb/core/icp"
+	"github.com/niccolofant/ic-arb/core/icp/icrc1"
+	"github.com/niccolofant/ic-arb/core/icp/icrc2"
+	"github.com/niccolofant/ic-arb/core/icp/kongswap/kong"
 )
 
 func TestKongswap() {
@@ -80,14 +80,23 @@ func TestKongswap() {
 
 	amountIn := big.NewInt(81_021_993)
 
-	quoteResult, err := kong.Quote(exeToken, icpToken, amountIn)
+	quoteResult, err := kong.OneStepQuote(icp.DexQuoteParams{
+		FromToken: exeToken,
+		ToToken:   icpToken,
+		AmountIn:  amountIn,
+	}, nil)
 	if err != nil {
 		panic(err)
 	}
 
 	log.Println("quote: ", quoteResult)
 
-	result, err := kong.Swap(exeToken, icpToken, amountIn, quoteResult)
+	result, err := kong.OneStepSwap(icp.DexSwapParams{
+		FromToken:    exeToken,
+		ToToken:      icpToken,
+		AmountIn:     amountIn,
+		AmountOutMin: quoteResult,
+	}, nil)
 	if err != nil {
 		panic(err)
 	}
