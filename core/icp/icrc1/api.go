@@ -233,6 +233,7 @@ type API interface {
 	Icrc1Transfer(args TransferArgs) (*TransferResult, error)
 	Icrc1BalanceOf(args Account) (*Balance, error)
 	Icrc1Metadata() (*[]MetaDatum, error)
+	Icrc1SupportedStandards() (*[]SupportedStandard, error)
 }
 
 // api is a client for the "icrc1" canister.

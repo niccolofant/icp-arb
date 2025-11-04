@@ -20,21 +20,13 @@ type icrc2 struct {
 	api API
 }
 
-func NewWithMetadata(
-	agent *icp.Agent,
-	canisterID icp.Principal,
-	metadata icp.TokenMetadata,
-) (*icrc2, error) {
+func New(agent *icp.Agent, canisterID icp.Principal) (*icrc2, error) {
 	api, err := NewAPI(canisterID, agent)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create api client for %s: %w", canisterID, err)
 	}
 
-	icrc1, err := icrc1.NewWithMetadata(
-		agent,
-		canisterID,
-		metadata,
-	)
+	icrc1, err := icrc1.New(agent, canisterID)
 	if err != nil {
 		return nil, err
 	}
@@ -51,10 +43,6 @@ func (i *icrc2) CanisterID() icp.Principal {
 
 func (i *icrc2) Equal(other icp.Canister) bool {
 	return i.CanisterID().Equal(other.CanisterID())
-}
-
-func (i *icrc2) Metadata() icp.TokenMetadata {
-	return i.ICRC1.Metadata()
 }
 
 func (i *icrc2) String() string {

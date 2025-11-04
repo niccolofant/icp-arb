@@ -6,8 +6,8 @@ type TokenStandard string
 
 const (
 	TokenStandardICP   TokenStandard = "ICP"
-	TokenStandardICRC1 TokenStandard = "ICRC1"
-	TokenStandardICRC2 TokenStandard = "ICRC2"
+	TokenStandardICRC1 TokenStandard = "ICRC-1"
+	TokenStandardICRC2 TokenStandard = "ICRC-2"
 )
 
 func (ts TokenStandard) String() string {

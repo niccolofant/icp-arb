@@ -21,29 +21,26 @@ type icrc1 struct {
 	metadata   icp.TokenMetadata
 }
 
-func NewWithMetadata(
-	agent *icp.Agent,
-	canisterID icp.Principal,
-	metadata icp.TokenMetadata,
-) (*icrc1, error) {
+func New(agent *icp.Agent, canisterID icp.Principal) (*icrc1, error) {
 	api, err := NewAPI(canisterID, agent)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create api client for %s: %w", canisterID, err)
 	}
 
-	return &icrc1{
+	icrc1 := &icrc1{
 		api:        api,
 		canisterID: canisterID,
-		metadata:   metadata,
-	}, nil
+	}
+
+	if err := icrc1.setMetadata(); err != nil {
+		return nil, fmt.Errorf("failed to set metadata for token %s: %w", canisterID, err)
+	}
+
+	return icrc1, nil
 }
 
 func (i *icrc1) CanisterID() icp.Principal {
 	return i.canisterID
-}
-
-func (i *icrc1) Metadata() icp.TokenMetadata {
-	return i.metadata
 }
 
 func (i *icrc1) Equal(other icp.Canister) bool {
